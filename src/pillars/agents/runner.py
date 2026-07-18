@@ -91,12 +91,17 @@ def _resources_payload(resources: list[ResourceChange]) -> str:
     return json.dumps([r.model_dump(exclude_none=True) for r in resources], indent=2)
 
 
+def _extract_text(message) -> str:
+    return next(block.text for block in message.content if block.type == "text")
+
+
 async def run_pillar_agent(
     client: AsyncAnthropic, pillar: str, resources: list[ResourceChange], model: str
 ) -> PillarResult:
     message = await client.messages.create(
         model=model,
         max_tokens=4096,
+        thinking={"type": "disabled"},
         system=_load_rubric(pillar),
         messages=[
             {
@@ -110,7 +115,7 @@ async def run_pillar_agent(
         ],
         output_config={"format": {"type": "json_schema", "schema": _PILLAR_RESULT_SCHEMA}},
     )
-    data = json.loads(message.content[0].text)
+    data = json.loads(_extract_text(message))
     findings = [Finding(**f) for f in data["findings"]]
     return PillarResult(pillar=pillar, findings=findings)
 
@@ -132,13 +137,14 @@ async def run_reconciler(
     message = await client.messages.create(
         model=model,
         max_tokens=4096,
+        thinking={"type": "disabled"},
         system=_RECONCILER_SYSTEM_PROMPT,
         messages=[
             {"role": "user", "content": "Here are all pillar findings as JSON:\n\n" + payload}
         ],
         output_config={"format": {"type": "json_schema", "schema": _CONFLICTS_SCHEMA}},
     )
-    data = json.loads(message.content[0].text)
+    data = json.loads(_extract_text(message))
     return [Conflict(**c) for c in data["conflicts"]]
 
 
