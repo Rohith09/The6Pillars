@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Deliberately flawed demo infra for `pillars review` — do not deploy as-is.
+
+Resources:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-personal-project-data-bucket
+      AccessControl: PublicRead
+
+  MainDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: my-app-db
+      Engine: postgres
+      EngineVersion: "15.4"
+      DBInstanceClass: db.t3.medium
+      AllocatedStorage: "20"
+      DBName: appdb
+      MasterUsername: appadmin
+      MasterUserPassword: changeme123!
+      MultiAZ: false
+      PubliclyAccessible: false
+      StorageEncrypted: false
+      DeletionProtection: false
+      BackupRetentionPeriod: 0

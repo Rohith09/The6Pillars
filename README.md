@@ -1,11 +1,12 @@
 # The6Pillars
 
-A multi-agent CLI that reviews your AWS Terraform plan against the 6 pillars of the
+A multi-agent CLI that reviews your AWS Terraform plan or CloudFormation template against the 6
+pillars of the
 [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/) —
 Security, Reliability, Performance Efficiency, Cost Optimization, Operational Excellence, and
 Sustainability.
 
-Six specialist agents (one per pillar) independently review your `terraform plan`, a reconciler
+Six specialist agents (one per pillar) independently review your infrastructure, a reconciler
 agent surfaces the cases where two pillars' recommendations conflict (e.g. Security wants
 Multi-AZ, Cost flags the doubled spend), and the CLI prints a triaged report — what's blocking,
 what's a genuine tradeoff for you to decide, and what passed clean.
@@ -51,26 +52,39 @@ cp .env.example .env
 
 ## Usage
 
-Review a Terraform directory directly (requires `terraform` and AWS credentials configured):
+`pillars review` figures out what you're pointing it at:
+
+**Terraform** — a directory runs a live `terraform plan` (requires `terraform` and AWS
+credentials configured):
 
 ```sh
 pillars review ./path/to/your/terraform
 ```
 
-Or review a pre-generated plan without needing Terraform/AWS credentials at all — handy for
-trying it out:
+Or skip Terraform/AWS entirely with a pre-generated plan file — handy for trying it out:
 
 ```sh
 pillars review ./examples/demo-infra --plan-json ./examples/demo-infra/plan.json
 ```
 
-The bundled `examples/demo-infra` is a deliberately flawed sample (public S3 bucket, hardcoded
-DB password, single-AZ database with no backups) so you can see the tool actually catch things.
+**CloudFormation** — point it at a template file directly (`.yaml`/`.yml`/`.json`), no AWS
+credentials needed. This reviews what the template defines, not a live diff:
+
+```sh
+pillars review ./examples/demo-infra-cfn/template.yaml
+```
+
+Both bundled examples plant the same category of flaws (public S3 bucket, hardcoded DB password,
+single-AZ database with no backups) so you can see the tool actually catch things, in either
+format.
 
 ## How it works
 
-1. `terraform plan` + `terraform show -json` produces the plan, trimmed down to just the changed
-   resources ([terraform.py](src/pillars/terraform.py)).
+1. The input is normalized into a common resource list — either from `terraform plan` +
+   `terraform show -json` ([terraform.py](src/pillars/terraform.py)), or by parsing a
+   CloudFormation template's `Resources` section directly
+   ([cloudformation.py](src/pillars/cloudformation.py)). Either path produces the same
+   `ResourceChange` shape the rest of the pipeline works with.
 2. Six pillar agents review the same resource list in parallel, each scoped to its own rubric
    ([agents/rubrics/](src/pillars/agents/rubrics/)), and return structured findings.
 3. A reconciler agent looks across all six findings sets for the same resource and flags genuine
@@ -83,9 +97,10 @@ reconciliation pass.
 
 ## Status
 
-v1 — reviews a single Terraform plan end-to-end. Not yet built: CDK support, resource-type
-routing (to skip irrelevant pillars on small diffs), a `.pillars.yml` priority config, and
-interactive follow-up (`pillars chat`).
+Reviews a Terraform plan or a CloudFormation template end-to-end. Not yet built: CDK support,
+a live CloudFormation change-set diff (current CFN support reviews the template as-written, not
+a diff against a deployed stack), resource-type routing (to skip irrelevant pillars on small
+diffs), a `.pillars.yml` priority config, and interactive follow-up (`pillars chat`).
 
 ## Testing
 

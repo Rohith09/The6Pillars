@@ -8,7 +8,7 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from pillars import terraform
+from pillars import cloudformation, terraform
 from pillars.agents import runner as agent_runner
 from pillars.render import render_report
 
@@ -24,7 +24,9 @@ def main() -> None:
 @app.command()
 def review(
     path: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Directory containing your Terraform config"
+        ...,
+        exists=True,
+        help="Directory containing your Terraform config, or a CloudFormation template file",
     ),
     plan_json: Optional[Path] = typer.Option(
         None,
@@ -35,7 +37,8 @@ def review(
         agent_runner.DEFAULT_MODEL, "--model", help="Anthropic model to use for each agent"
     ),
 ) -> None:
-    """Review a Terraform plan against the 6 AWS Well-Architected pillars."""
+    """Review a Terraform plan or CloudFormation template against the 6 AWS Well-Architected
+    pillars."""
     load_dotenv()
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
@@ -47,6 +50,11 @@ def review(
     if plan_json is not None:
         console.print(f"Loading plan from {plan_json}...")
         plan = json.loads(plan_json.read_text())
+        resources = terraform.normalize(plan)
+    elif path.is_file():
+        console.print(f"Loading CloudFormation template from {path}...")
+        template = cloudformation.parse_template(path)
+        resources = cloudformation.normalize(template)
     else:
         console.print("Synthesizing... (terraform plan)")
         try:
@@ -54,8 +62,8 @@ def review(
         except terraform.TerraformError as e:
             console.print(f"[red]{e}[/]")
             raise typer.Exit(1) from e
+        resources = terraform.normalize(plan)
 
-    resources = terraform.normalize(plan)
     if not resources:
         console.print("No resource changes to review.")
         raise typer.Exit(0)
