@@ -1,0 +1,58 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.7.5",
+  "resource_changes": [
+    {
+      "address": "aws_s3_bucket.data",
+      "type": "aws_s3_bucket",
+      "name": "data",
+      "provider_name": "registry.terraform.io/hashicorp/aws",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "bucket": "my-personal-project-data-bucket",
+          "server_side_encryption_configuration": [],
+          "tags": null
+        }
+      }
+    },
+    {
+      "address": "aws_s3_bucket_acl.data_acl",
+      "type": "aws_s3_bucket_acl",
+      "name": "data_acl",
+      "provider_name": "registry.terraform.io/hashicorp/aws",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "acl": "public-read"
+        }
+      }
+    },
+    {
+      "address": "aws_db_instance.main",
+      "type": "aws_db_instance",
+      "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/aws",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "identifier": "my-app-db",
+          "engine": "postgres",
+          "engine_version": "15.4",
+          "instance_class": "db.t3.medium",
+          "allocated_storage": 20,
+          "db_name": "appdb",
+          "username": "appadmin",
+          "password": "changeme123!",
+          "multi_az": false,
+          "publicly_accessible": false,
+          "skip_final_snapshot": true,
+          "backup_retention_period": 0,
+          "storage_encrypted": false,
+          "deletion_protection": false,
+          "tags": null
+        }
+      }
+    }
+  ]
+}
