@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import webbrowser
 from pathlib import Path
 from typing import Optional
 
@@ -10,7 +11,8 @@ from rich.console import Console
 
 from pillars import cloudformation, context as context_module, terraform
 from pillars.agents import runner as agent_runner
-from pillars.render import render_report
+from pillars.render import render_summary
+from pillars.render_html import render_html_report
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -41,6 +43,12 @@ def review(
         "--context",
         exists=True,
         help="Architecture notes for the agents to weigh (defaults to .pillars/context.md if present)",
+    ),
+    html_path: Path = typer.Option(
+        Path("pillars-report.html"), "--html-path", help="Where to write the HTML report"
+    ),
+    no_browser: bool = typer.Option(
+        False, "--no-browser", help="Don't automatically open the HTML report when done"
     ),
 ) -> None:
     """Review a Terraform plan or CloudFormation template against the 6 AWS Well-Architected
@@ -84,7 +92,13 @@ def review(
     console.print("\nConsulting pillar agents...")
 
     report = asyncio.run(agent_runner.review(resources, model=model, context=context_text))
-    exit_code = render_report(report, console)
+
+    html_path.write_text(render_html_report(report))
+    exit_code = render_summary(report, console, str(html_path))
+
+    if not no_browser:
+        webbrowser.open(f"file://{html_path.resolve()}")
+
     raise typer.Exit(exit_code)
 
 

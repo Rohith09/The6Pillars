@@ -15,12 +15,7 @@ def _print_finding(console: Console, finding: Finding, color: str) -> None:
     console.print(f"      → {finding.recommendation}")
 
 
-def render_report(report: Report, console: Console | None = None) -> int:
-    """Print the triaged report to the terminal. Returns an exit code (1 if any
-    blocking findings remain, 0 otherwise)."""
-    console = console or Console()
-
-    console.print()
+def _print_checklist(report: Report, console: Console) -> None:
     console.print("[bold]Pillar review[/]")
     for pr in report.pillar_results:
         icon = _ICON_OK if not pr.findings else _ICON_WARN
@@ -32,6 +27,28 @@ def render_report(report: Report, console: Console | None = None) -> int:
             if blocking_count:
                 detail += f" ({blocking_count} blocking)"
         console.print(f"  {icon} {_label(pr.pillar):<24} {detail}")
+
+
+def render_summary(report: Report, console: Console, html_path: str) -> int:
+    """Print a short terminal summary (checklist + counts) and point to the full HTML report.
+    Returns an exit code (1 if any blocking findings remain, 0 otherwise)."""
+    console.print()
+    _print_checklist(report, console)
+    console.print(
+        f"\n[bold red]{len(report.blocking)}[/] blocking · "
+        f"[bold yellow]{len(report.your_call)}[/] your call · "
+        f"{len(report.other)} other — see [bold]{html_path}[/]\n"
+    )
+    return 1 if report.blocking else 0
+
+
+def render_report(report: Report, console: Console | None = None) -> int:
+    """Print the full triaged report to the terminal. Returns an exit code (1 if any
+    blocking findings remain, 0 otherwise)."""
+    console = console or Console()
+
+    console.print()
+    _print_checklist(report, console)
 
     if report.conflicts:
         console.print()

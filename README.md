@@ -8,8 +8,8 @@ Sustainability.
 
 Six specialist agents (one per pillar) independently review your infrastructure, a reconciler
 agent surfaces the cases where two pillars' recommendations conflict (e.g. Security wants
-Multi-AZ, Cost flags the doubled spend), and the CLI prints a triaged report — what's blocking,
-what's a genuine tradeoff for you to decide, and what passed clean.
+Multi-AZ, Cost flags the doubled spend), and the results are written to a self-contained local
+HTML report — opened in your browser automatically — with a short summary in the terminal.
 
 ```
 $ pillars review ./infra
@@ -24,16 +24,12 @@ Pillar review
   ✓ Operational Excellence
   ✓ Sustainability
 
-BLOCKING (1)
-  • aws_s3_bucket.data — public access not blocked
-      → add an aws_s3_bucket_public_access_block resource
-
-YOUR CALL (1)
-  • aws_db_instance.main — single-AZ, no automated failover
-      → accept the risk, or set multi_az = true (+~$15/mo)
-
-PASSED — Cost Optimization, Performance Efficiency, Sustainability, Operational Excellence clean
+1 blocking · 1 your call · 0 other — see pillars-report.html
 ```
+
+`pillars-report.html` opens automatically (skip with `--no-browser`) with the full triaged
+detail — BLOCKING and YOUR CALL sections expanded, the long tail of lower-priority findings
+collapsed behind a `Show N more` toggle so it doesn't dominate the page.
 
 ## Setup
 
@@ -117,7 +113,9 @@ justify a design choice, but it won't excuse a real problem the note doesn't act
    ([agents/rubrics/](src/pillars/agents/rubrics/)), and return structured findings.
 3. A reconciler agent looks across all six findings sets for the same resource and flags genuine
    cross-pillar conflicts, resolving the clear-cut ones and leaving true tradeoffs as "your call."
-4. The CLI renders a triaged terminal report ([render.py](src/pillars/render.py)).
+4. The CLI writes a triaged HTML report ([render_html.py](src/pillars/render_html.py)), opens it
+   in your browser, and prints a short summary to the terminal
+   ([render.py](src/pillars/render.py)).
 
 Built on the [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python) using
 `claude-sonnet-5` with native structured outputs — no framework, just parallel API calls plus a

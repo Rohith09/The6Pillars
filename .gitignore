@@ -13,3 +13,6 @@ dist/
 *.tfstate.backup
 tfplan.bin
 crash.log
+
+# generated report
+pillars-report.html
