@@ -61,10 +61,27 @@ _CONFLICTS_SCHEMA = {
     "additionalProperties": False,
 }
 
-_RECONCILER_SYSTEM_PROMPT = """You are the reconciler on an AWS Well-Architected review panel. \
+_SHARED_PREAMBLE = """Each resource in the input may include a `references` field — a list of \
+other resource addresses/logical IDs that this resource points to (e.g. a CloudFront \
+distribution whose Origin references an S3 bucket, or a security group rule that references \
+another security group). Use this to understand the architecture's actual shape before flagging \
+something as risky in isolation — e.g. a public-looking S3 bucket that's the origin of a \
+CloudFront distribution with Origin Access Control is a different situation than an unexplained \
+public bucket with nothing in front of it.
+
+The input may also include a "User-supplied architecture context" section with notes the user \
+has written about their setup, covering things that can't be inferred from the plan/template \
+alone (e.g. "this bucket is written to directly by a separate legacy application, not just \
+through this stack"). Weigh this context genuinely — it can justify a design choice you'd \
+otherwise flag — but don't let it excuse away a real problem it doesn't actually address.
+
+"""
+
+_RECONCILER_SYSTEM_PROMPT = _SHARED_PREAMBLE + """You are the reconciler on an AWS \
+Well-Architected review panel. \
 You are given the findings from 6 specialist pillar reviewers (security, reliability, \
 performance_efficiency, cost_optimization, operational_excellence, sustainability) on the same \
-Terraform plan.
+set of infrastructure resources.
 
 Your only job: find cases where two or more pillars have findings on the SAME resource whose \
 recommendations are in tension (fixing one pillar's finding would work against another \
@@ -84,7 +101,7 @@ there are none, return an empty list.
 
 
 def _load_rubric(pillar: str) -> str:
-    return (RUBRICS_DIR / f"{pillar}.md").read_text()
+    return _SHARED_PREAMBLE + (RUBRICS_DIR / f"{pillar}.md").read_text()
 
 
 def _resources_payload(resources: list[ResourceChange]) -> str:
@@ -95,8 +112,18 @@ def _extract_text(message) -> str:
     return next(block.text for block in message.content if block.type == "text")
 
 
+def _with_context(body: str, context: str | None) -> str:
+    if not context:
+        return body
+    return body + "\n\nUser-supplied architecture context:\n\n" + context
+
+
 async def run_pillar_agent(
-    client: AsyncAnthropic, pillar: str, resources: list[ResourceChange], model: str
+    client: AsyncAnthropic,
+    pillar: str,
+    resources: list[ResourceChange],
+    model: str,
+    context: str | None = None,
 ) -> PillarResult:
     message = await client.messages.create(
         model=model,
@@ -106,10 +133,10 @@ async def run_pillar_agent(
         messages=[
             {
                 "role": "user",
-                "content": (
-                    "Here is the Terraform plan's resource changes as JSON. Review them per "
-                    "your pillar's checklist and return findings.\n\n"
-                    + _resources_payload(resources)
+                "content": _with_context(
+                    "Here is the infrastructure's resource list as JSON. Review them per your "
+                    "pillar's checklist and return findings.\n\n" + _resources_payload(resources),
+                    context,
                 ),
             }
         ],
@@ -121,17 +148,26 @@ async def run_pillar_agent(
 
 
 async def run_all_pillars(
-    client: AsyncAnthropic, resources: list[ResourceChange], model: str
+    client: AsyncAnthropic,
+    resources: list[ResourceChange],
+    model: str,
+    context: str | None = None,
 ) -> list[PillarResult]:
     return list(
         await asyncio.gather(
-            *(run_pillar_agent(client, pillar, resources, model) for pillar in PILLARS)
+            *(
+                run_pillar_agent(client, pillar, resources, model, context)
+                for pillar in PILLARS
+            )
         )
     )
 
 
 async def run_reconciler(
-    client: AsyncAnthropic, pillar_results: list[PillarResult], model: str
+    client: AsyncAnthropic,
+    pillar_results: list[PillarResult],
+    model: str,
+    context: str | None = None,
 ) -> list[Conflict]:
     payload = json.dumps([pr.model_dump() for pr in pillar_results], indent=2)
     message = await client.messages.create(
@@ -140,7 +176,12 @@ async def run_reconciler(
         thinking={"type": "disabled"},
         system=_RECONCILER_SYSTEM_PROMPT,
         messages=[
-            {"role": "user", "content": "Here are all pillar findings as JSON:\n\n" + payload}
+            {
+                "role": "user",
+                "content": _with_context(
+                    "Here are all pillar findings as JSON:\n\n" + payload, context
+                ),
+            }
         ],
         output_config={"format": {"type": "json_schema", "schema": _CONFLICTS_SCHEMA}},
     )
@@ -177,8 +218,10 @@ def build_report(pillar_results: list[PillarResult], conflicts: list[Conflict]) 
     )
 
 
-async def review(resources: list[ResourceChange], model: str = DEFAULT_MODEL) -> Report:
+async def review(
+    resources: list[ResourceChange], model: str = DEFAULT_MODEL, context: str | None = None
+) -> Report:
     async with AsyncAnthropic() as client:
-        pillar_results = await run_all_pillars(client, resources, model)
-        conflicts = await run_reconciler(client, pillar_results, model)
+        pillar_results = await run_all_pillars(client, resources, model, context)
+        conflicts = await run_reconciler(client, pillar_results, model, context)
     return build_report(pillar_results, conflicts)

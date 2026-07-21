@@ -38,3 +38,25 @@ def test_normalize_resolves_yaml_intrinsic_functions():
 
 def test_normalize_handles_missing_resources_key():
     assert normalize({}) == []
+
+
+def test_normalize_extracts_references_from_ref_getatt_and_sub():
+    template = {
+        "Resources": {
+            "Bucket": {"Type": "AWS::S3::Bucket", "Properties": {}},
+            "Distribution": {
+                "Type": "AWS::CloudFront::Distribution",
+                "Properties": {
+                    "Origin": {"Ref": "Bucket"},
+                    "Comment": {"Fn::Sub": "CDN for ${Bucket.Arn}, region ${AWS::Region}"},
+                    "OriginAccessIdentity": {"Fn::GetAtt": ["Bucket", "Arn"]},
+                },
+            },
+        }
+    }
+    resources = normalize(template)
+    distribution = next(r for r in resources if r.address == "Distribution")
+    assert distribution.references == ["Bucket"]
+
+    bucket = next(r for r in resources if r.address == "Bucket")
+    assert bucket.references == []

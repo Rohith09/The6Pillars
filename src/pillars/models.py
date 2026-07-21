@@ -21,6 +21,7 @@ class ResourceChange(BaseModel):
     provider: str
     actions: list[str]
     after: dict | None = None
+    references: list[str] = Field(default_factory=list)
 
 
 class Finding(BaseModel):

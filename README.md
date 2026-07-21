@@ -78,13 +78,41 @@ Both bundled examples plant the same category of flaws (public S3 bucket, hardco
 single-AZ database with no backups) so you can see the tool actually catch things, in either
 format.
 
+## Giving it context
+
+Static review has an inherent blind spot: a "public" S3 bucket might be a genuine misconfiguration,
+or it might be the intentional origin of a CloudFront distribution. Two things help the agents
+tell the difference:
+
+- **Resource references are extracted automatically** — no action needed. Both the Terraform and
+  CloudFormation paths detect which resources point at which others (a CloudFront distribution's
+  `Origin` pointing at an S3 bucket, a security group rule referencing another security group,
+  etc.) and pass that graph to every agent, so they can weigh a resource in context instead of in
+  isolation.
+- **For anything that can't be inferred from the plan/template at all** — a fact like "a separate
+  legacy app writes to this bucket directly, not just through this stack" — write it down in
+  `.pillars/context.md` in the directory you run `pillars review` from. It's picked up
+  automatically every run (or point at a different file with `--context path/to/notes.md`). The
+  CLI prints `✓ Using context from ...` when something was loaded, so it's never silently ignored.
+
+```sh
+mkdir -p .pillars
+echo "DataBucket is written to directly by a legacy ETL job outside this stack." > .pillars/context.md
+pillars review ./examples/demo-infra-cfn/template.yaml
+```
+
+Agents weigh this context genuinely rather than treating it as an automatic override — it can
+justify a design choice, but it won't excuse a real problem the note doesn't actually address.
+
 ## How it works
 
 1. The input is normalized into a common resource list — either from `terraform plan` +
    `terraform show -json` ([terraform.py](src/pillars/terraform.py)), or by parsing a
    CloudFormation template's `Resources` section directly
    ([cloudformation.py](src/pillars/cloudformation.py)). Either path produces the same
-   `ResourceChange` shape the rest of the pipeline works with.
+   `ResourceChange` shape the rest of the pipeline works with, including the cross-resource
+   `references` extracted from Terraform's configuration block or CloudFormation's
+   `Ref`/`GetAtt`/`Sub` intrinsics.
 2. Six pillar agents review the same resource list in parallel, each scoped to its own rubric
    ([agents/rubrics/](src/pillars/agents/rubrics/)), and return structured findings.
 3. A reconciler agent looks across all six findings sets for the same resource and flags genuine

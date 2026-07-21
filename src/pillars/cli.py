@@ -8,7 +8,7 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
-from pillars import cloudformation, terraform
+from pillars import cloudformation, context as context_module, terraform
 from pillars.agents import runner as agent_runner
 from pillars.render import render_report
 
@@ -35,6 +35,12 @@ def review(
     ),
     model: str = typer.Option(
         agent_runner.DEFAULT_MODEL, "--model", help="Anthropic model to use for each agent"
+    ),
+    context_path: Optional[Path] = typer.Option(
+        None,
+        "--context",
+        exists=True,
+        help="Architecture notes for the agents to weigh (defaults to .pillars/context.md if present)",
     ),
 ) -> None:
     """Review a Terraform plan or CloudFormation template against the 6 AWS Well-Architected
@@ -68,10 +74,16 @@ def review(
         console.print("No resource changes to review.")
         raise typer.Exit(0)
 
-    console.print(f"✓ {len(resources)} resource change(s)\n")
-    console.print("Consulting pillar agents...")
+    console.print(f"✓ {len(resources)} resource change(s)")
 
-    report = asyncio.run(agent_runner.review(resources, model=model))
+    context_text = context_module.load_context(context_path)
+    used_context_path = context_path or context_module.DEFAULT_CONTEXT_PATH
+    if context_text:
+        console.print(f"✓ Using context from {used_context_path}")
+
+    console.print("\nConsulting pillar agents...")
+
+    report = asyncio.run(agent_runner.review(resources, model=model, context=context_text))
     exit_code = render_report(report, console)
     raise typer.Exit(exit_code)
 
