@@ -11,6 +11,7 @@ from rich.console import Console
 
 from pillars import cloudformation, context as context_module, terraform
 from pillars.agents import runner as agent_runner
+from pillars.live_display import review_with_animation
 from pillars.render import render_summary
 from pillars.render_html import render_html_report
 
@@ -89,9 +90,9 @@ def review(
     if context_text:
         console.print(f"✓ Using context from {used_context_path}")
 
-    console.print("\nConsulting pillar agents...")
+    console.print()
 
-    report = asyncio.run(agent_runner.review(resources, model=model, context=context_text))
+    report = asyncio.run(review_with_animation(resources, model, context_text, console))
 
     html_path.write_text(render_html_report(report))
     exit_code = render_summary(report, console, str(html_path))
