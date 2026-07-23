@@ -9,8 +9,11 @@ import typer
 from dotenv import load_dotenv
 from rich.console import Console
 
+from graphviz.backend.execute import ExecutableNotFound
+
 from pillars import cloudformation, context as context_module, terraform
 from pillars.agents import runner as agent_runner
+from pillars.diagram import build_architecture_diagram
 from pillars.live_display import review_with_animation
 from pillars.render import render_summary
 from pillars.render_html import render_html_report
@@ -94,7 +97,16 @@ def review(
 
     report = asyncio.run(review_with_animation(resources, model, context_text, console))
 
-    html_path.write_text(render_html_report(report))
+    try:
+        diagram_png = build_architecture_diagram(resources)
+    except ExecutableNotFound:
+        diagram_png = None
+        console.print(
+            "ℹ Skipping architecture diagram — install Graphviz to enable it: "
+            "brew install graphviz"
+        )
+
+    html_path.write_text(render_html_report(report, diagram_png))
     exit_code = render_summary(report, console, str(html_path))
 
     if not no_browser:

@@ -71,3 +71,15 @@ def test_render_html_report_handles_empty_report():
 
     assert html.startswith("<!doctype html>")
     assert "No findings." in html
+
+
+def test_render_html_report_omits_diagram_section_when_none():
+    html = render_html_report(_make_report(), diagram_png=None)
+    assert "Architecture" not in html
+    assert "data:image/png;base64," not in html
+
+
+def test_render_html_report_embeds_diagram_when_present():
+    html = render_html_report(_make_report(), diagram_png=b"\x89PNG\r\n\x1a\nfake")
+    assert "<h2>Architecture</h2>" in html
+    assert "data:image/png;base64," in html

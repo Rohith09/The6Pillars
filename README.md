@@ -28,8 +28,10 @@ Pillar review
 ```
 
 `pillars-report.html` opens automatically (skip with `--no-browser`) with the full triaged
-detail — BLOCKING and YOUR CALL sections expanded, the long tail of lower-priority findings
-collapsed behind a `Show N more` toggle so it doesn't dominate the page.
+detail — an AWS-icon architecture diagram at the top (generated from the same resources and
+references the pillar agents reviewed), then BLOCKING and YOUR CALL sections expanded, and the
+long tail of lower-priority findings collapsed behind a `Show N more` toggle so it doesn't
+dominate the page.
 
 ## Setup
 
@@ -38,6 +40,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
+The architecture diagram needs [Graphviz](https://graphviz.org) installed (`brew install
+graphviz` on macOS) — optional; if it's not found, the diagram section is skipped and everything
+else still works.
 
 Set your Anthropic API key (get one at [console.anthropic.com](https://console.anthropic.com)):
 
@@ -113,8 +119,13 @@ justify a design choice, but it won't excuse a real problem the note doesn't act
    ([agents/rubrics/](src/pillars/agents/rubrics/)), and return structured findings.
 3. A reconciler agent looks across all six findings sets for the same resource and flags genuine
    cross-pillar conflicts, resolving the clear-cut ones and leaving true tradeoffs as "your call."
-4. The CLI writes a triaged HTML report ([render_html.py](src/pillars/render_html.py)), opens it
-   in your browser, and prints a short summary to the terminal
+4. Independently of the findings — it only needs the resource list (types + references), not the
+   review results — the same data is rendered into an AWS-icon architecture diagram via
+   [Graphviz](https://graphviz.org) and the
+   [`diagrams`](https://github.com/mingrammer/diagrams) library
+   ([diagram.py](src/pillars/diagram.py)).
+5. The CLI writes a triaged HTML report ([render_html.py](src/pillars/render_html.py)) with the
+   diagram embedded, opens it in your browser, and prints a short summary to the terminal
    ([render.py](src/pillars/render.py)).
 
 Built on the [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python) using

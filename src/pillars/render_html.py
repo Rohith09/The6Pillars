@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime, timezone
 from html import escape
 
@@ -93,6 +94,8 @@ details.card[open] summary::before { content: "\\25BE  "; }
 details.card .card-inner { padding: 0 1rem 0.85rem; }
 .passed { color: var(--green); font-size: 0.95rem; }
 .empty { color: var(--muted); font-style: italic; }
+.diagram { text-align: center; }
+.diagram img { max-width: 100%; height: auto; border-radius: 8px; background: #fff; }
 """
 
 
@@ -147,7 +150,17 @@ def _conflicts_section(report: Report) -> str:
 {"".join(cards)}"""
 
 
-def render_html_report(report: Report) -> str:
+def _diagram_section(diagram_png: bytes | None) -> str:
+    if not diagram_png:
+        return ""
+    encoded = base64.b64encode(diagram_png).decode("ascii")
+    return f"""<h2>Architecture</h2>
+<div class="diagram">
+  <img src="data:image/png;base64,{encoded}" alt="Architecture diagram">
+</div>"""
+
+
+def render_html_report(report: Report, diagram_png: bytes | None = None) -> str:
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     checklist_rows = []
@@ -197,6 +210,7 @@ def render_html_report(report: Report) -> str:
   <div class="badges">
     {"".join(badges)}
   </div>
+  {_diagram_section(diagram_png)}
   <h2>Pillar review</h2>
   <div class="checklist">
     {"".join(checklist_rows)}
