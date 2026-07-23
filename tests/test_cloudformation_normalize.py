@@ -10,7 +10,7 @@ def test_normalize_extracts_expected_resources():
     resources = normalize(template)
 
     addresses = {r.address for r in resources}
-    assert addresses == {"DataBucket", "MainDatabase"}
+    assert addresses == {"DataBucket", "MainDatabase", "CDN"}
 
     db = next(r for r in resources if r.address == "MainDatabase")
     assert db.type == "AWS::RDS::DBInstance"
@@ -21,6 +21,10 @@ def test_normalize_extracts_expected_resources():
     bucket = next(r for r in resources if r.address == "DataBucket")
     assert bucket.type == "AWS::S3::Bucket"
     assert bucket.after["AccessControl"] == "PublicRead"
+
+    cdn = next(r for r in resources if r.address == "CDN")
+    assert cdn.type == "AWS::CloudFront::Distribution"
+    assert cdn.references == ["DataBucket"]
 
 
 def test_normalize_resolves_yaml_intrinsic_functions():

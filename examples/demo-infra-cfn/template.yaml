@@ -8,6 +8,24 @@ Resources:
       BucketName: my-personal-project-data-bucket
       AccessControl: PublicRead
 
+  # References DataBucket via Ref/GetAtt — shows up as an edge in the architecture diagram,
+  # and gives the Security agent a real relationship to reason about (the origin's OAC is left
+  # empty below, so the bucket is still directly public alongside the CDN — a genuine finding,
+  # not something the diagram should make disappear).
+  CDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultCacheBehavior:
+          TargetOriginId: !Ref DataBucket
+          ViewerProtocolPolicy: redirect-to-https
+        Origins:
+          - Id: !Ref DataBucket
+            DomainName: !GetAtt DataBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+
   MainDatabase:
     Type: AWS::RDS::DBInstance
     Properties:
