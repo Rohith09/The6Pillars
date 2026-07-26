@@ -73,13 +73,24 @@ def test_render_html_report_handles_empty_report():
     assert "No findings." in html
 
 
-def test_render_html_report_omits_diagram_section_when_none():
+def test_render_html_report_omits_tab_bar_when_no_diagram():
     html = render_html_report(_make_report(), diagram_png=None)
     assert "Architecture" not in html
     assert "data:image/png;base64," not in html
+    assert 'class="tabs"' not in html
+    assert 'id="page-architecture"' not in html
 
 
-def test_render_html_report_embeds_diagram_when_present():
+def test_render_html_report_adds_architecture_tab_when_diagram_present():
     html = render_html_report(_make_report(), diagram_png=b"\x89PNG\r\n\x1a\nfake")
-    assert "<h2>Architecture</h2>" in html
+    assert 'class="tabs"' in html
+    assert 'id="page-overview"' in html
+    assert 'id="page-architecture"' in html
+    assert ">Architecture<" in html
     assert "data:image/png;base64," in html
+    assert "pillarsShowPage" in html
+
+
+def test_render_html_report_inlines_logo_svg_in_header():
+    html = render_html_report(_make_report())
+    assert '<div class="logo"><svg' in html

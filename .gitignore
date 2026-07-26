@@ -16,3 +16,6 @@ crash.log
 
 # generated report
 pillars-report.html
+
+# macOS
+.DS_Store

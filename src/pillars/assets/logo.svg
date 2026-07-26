@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="The6Pillars logo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#211C4D"/>
+    </linearGradient>
+    <linearGradient id="pediment" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFCF4"/>
+      <stop offset="1" stop-color="#E9E2CC"/>
+    </linearGradient>
+    <linearGradient id="col0" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0F766E"/><stop offset="1" stop-color="#2DD4BF"/>
+    </linearGradient>
+    <linearGradient id="col1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#075985"/><stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="col2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3730A3"/><stop offset="1" stop-color="#818CF8"/>
+    </linearGradient>
+    <linearGradient id="col3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6D28D9"/><stop offset="1" stop-color="#A78BFA"/>
+    </linearGradient>
+    <linearGradient id="col4" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#A21CAF"/><stop offset="1" stop-color="#E879F9"/>
+    </linearGradient>
+    <linearGradient id="col5" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9F1239"/><stop offset="1" stop-color="#FB7185"/>
+    </linearGradient>
+  </defs>
+
+  <!-- badge -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#bg)"/>
+
+  <!-- pediment (roof) -->
+  <polygon points="256,90 412,152 100,152" fill="url(#pediment)"/>
+  <!-- entablature -->
+  <rect x="96" y="150" width="320" height="20" rx="4" fill="url(#pediment)"/>
+
+  <!-- columns: capital, fluted shaft, base -->
+  <g>
+    <rect x="116" y="170" width="40" height="14" rx="3" fill="url(#pediment)"/>
+    <rect x="124" y="184" width="24" height="208" fill="url(#col0)"/>
+    <rect x="130" y="190" width="4" height="196" fill="#ffffff" opacity="0.28"/>
+    <rect x="116" y="392" width="40" height="14" rx="3" fill="url(#pediment)"/>
+  </g>
+  <g>
+    <rect x="164" y="170" width="40" height="14" rx="3" fill="url(#pediment)"/>
+    <rect x="172" y="184" width="24" height="208" fill="url(#col1)"/>
+    <rect x="178" y="190" width="4" height="196" fill="#ffffff" opacity="0.28"/>
+    <rect x="164" y="392" width="40" height="14" rx="3" fill="url(#pediment)"/>
+  </g>
+  <g>
+    <rect x="212" y="170" width="40" height="14" rx="3" fill="url(#pediment)"/>
+    <rect x="220" y="184" width="24" height="208" fill="url(#col2)"/>
+    <rect x="226" y="190" width="4" height="196" fill="#ffffff" opacity="0.28"/>
+    <rect x="212" y="392" width="40" height="14" rx="3" fill="url(#pediment)"/>
+  </g>
+  <g>
+    <rect x="260" y="170" width="40" height="14" rx="3" fill="url(#pediment)"/>
+    <rect x="268" y="184" width="24" height="208" fill="url(#col3)"/>
+    <rect x="274" y="190" width="4" height="196" fill="#ffffff" opacity="0.28"/>
+    <rect x="260" y="392" width="40" height="14" rx="3" fill="url(#pediment)"/>
+  </g>
+  <g>
+    <rect x="308" y="170" width="40" height="14" rx="3" fill="url(#pediment)"/>
+    <rect x="316" y="184" width="24" height="208" fill="url(#col4)"/>
+    <rect x="322" y="190" width="4" height="196" fill="#ffffff" opacity="0.28"/>
+    <rect x="308" y="392" width="40" height="14" rx="3" fill="url(#pediment)"/>
+  </g>
+  <g>
+    <rect x="356" y="170" width="40" height="14" rx="3" fill="url(#pediment)"/>
+    <rect x="364" y="184" width="24" height="208" fill="url(#col5)"/>
+    <rect x="370" y="190" width="4" height="196" fill="#ffffff" opacity="0.28"/>
+    <rect x="356" y="392" width="40" height="14" rx="3" fill="url(#pediment)"/>
+  </g>
+
+  <!-- stylobate (base platform) -->
+  <rect x="88" y="406" width="336" height="22" rx="5" fill="url(#pediment)"/>
+  <rect x="72" y="430" width="368" height="14" rx="5" fill="url(#pediment)" opacity="0.85"/>
+</svg>
