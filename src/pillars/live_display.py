@@ -30,20 +30,20 @@ def _pillar_phrase(pillar: str, result: PillarResult) -> str:
     blocking = sum(1 for f in result.findings if f.severity == "blocking")
 
     if count == 0:
-        return f"{emoji} [green]{label}[/]: looks clean, no findings."
+        return f"{emoji} [green]{label} agent[/]: looks clean, no findings."
     if blocking:
         plural = "s" if count != 1 else ""
-        return f"{emoji} [red]{label}[/]: found {count} issue{plural} — {blocking} blocking."
+        return f"{emoji} [red]{label} agent[/]: found {count} issue{plural} — {blocking} blocking."
     plural = "s" if count != 1 else ""
-    return f"{emoji} [yellow]{label}[/]: found {count} finding{plural} worth a look."
+    return f"{emoji} [yellow]{label} agent[/]: found {count} finding{plural} worth a look."
 
 
 def _reconciler_phrase(conflicts: list[Conflict]) -> str:
     emoji, label = _PILLAR_META[_RECONCILER_KEY]
     if not conflicts:
-        return f"{emoji} [green]{label}[/]: no cross-pillar conflicts, all clear."
+        return f"{emoji} [green]{label} agent[/]: no cross-pillar conflicts, all clear."
     plural = "s" if len(conflicts) != 1 else ""
-    return f"{emoji} [yellow]{label}[/]: found {len(conflicts)} cross-pillar conflict{plural} to weigh in on."
+    return f"{emoji} [yellow]{label} agent[/]: found {len(conflicts)} cross-pillar conflict{plural} to weigh in on."
 
 
 def _render(lines: dict[str, str | None]) -> Table:
@@ -52,7 +52,9 @@ def _render(lines: dict[str, str | None]) -> Table:
         line = lines[key]
         if line is None:
             emoji, label = _PILLAR_META[key]
-            table.add_row(Spinner("dots", style="dim"), f"[dim]{emoji} {label} is reviewing...[/]")
+            table.add_row(
+                Spinner("dots", style="dim"), f"[dim]{emoji} {label} agent is reviewing...[/]"
+            )
         else:
             table.add_row(" ", line)
     return table
