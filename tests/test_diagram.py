@@ -70,3 +70,64 @@ def test_build_architecture_diagram_renders_png_with_references():
     png = build_architecture_diagram(resources)
     assert png is not None
     assert png.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+@pytest.mark.skipif(not _GRAPHVIZ_AVAILABLE, reason="Graphviz not installed")
+def test_build_architecture_diagram_renders_with_vpc_subnet_and_security_groups():
+    resources = [
+        ResourceChange(
+            address="VPC",
+            type="AWS::EC2::VPC",
+            name="VPC",
+            provider="aws",
+            actions=["template"],
+            references=[],
+            after={"CidrBlock": "10.0.0.0/16"},
+        ),
+        ResourceChange(
+            address="PublicSubnet1",
+            type="AWS::EC2::Subnet",
+            name="PublicSubnet1",
+            provider="aws",
+            actions=["template"],
+            references=["VPC"],
+            after={"CidrBlock": "10.0.1.0/24"},
+        ),
+        ResourceChange(
+            address="ALBSecurityGroup",
+            type="AWS::EC2::SecurityGroup",
+            name="ALBSecurityGroup",
+            provider="aws",
+            actions=["template"],
+            references=["VPC"],
+        ),
+        ResourceChange(
+            address="AppSecurityGroup",
+            type="AWS::EC2::SecurityGroup",
+            name="AppSecurityGroup",
+            provider="aws",
+            actions=["template"],
+            references=["VPC", "ALBSecurityGroup"],
+            after={
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 8080,
+                        "ToPort": 8080,
+                        "SourceSecurityGroupId": {"Ref": "ALBSecurityGroup"},
+                    }
+                ]
+            },
+        ),
+        ResourceChange(
+            address="AppInstance",
+            type="AWS::EC2::Instance",
+            name="AppInstance",
+            provider="aws",
+            actions=["template"],
+            references=["PublicSubnet1", "AppSecurityGroup"],
+        ),
+    ]
+    png = build_architecture_diagram(resources)
+    assert png is not None
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")
