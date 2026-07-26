@@ -6,6 +6,7 @@ from diagrams.aws.compute import EC2, ECS, EKS, AutoScaling, Fargate, Lambda
 from diagrams.aws.database import RDS, Aurora, Dynamodb, ElastiCache, Redshift
 from diagrams.aws.general import General
 from diagrams.aws.integration import SNS, SQS
+from diagrams.aws.management import CloudwatchAlarm, CloudwatchLogs
 from diagrams.aws.network import (
     ALB,
     ELB,
@@ -14,7 +15,10 @@ from diagrams.aws.network import (
     CloudFront,
     InternetGateway,
     NATGateway,
+    PublicSubnet,
+    PrivateSubnet,
     Route53,
+    RouteTable,
 )
 from diagrams.aws.security import KMS, IAM, Cognito, SecretsManager, WAF
 from diagrams.aws.storage import S3
@@ -60,6 +64,19 @@ _ICON_MAP: dict[str, type] = {
     "aws_wafv2_web_acl": WAF,
     "aws_sqs_queue": SQS,
     "aws_sns_topic": SNS,
+    "aws_route_table": RouteTable,
+    "aws_launch_template": EC2,
+    "aws_lb_target_group": ALB,
+    "aws_lb_listener": ALB,
+    "aws_iam_instance_profile": IAM,
+    "aws_db_subnet_group": RDS,
+    "aws_elasticache_subnet_group": ElastiCache,
+    "aws_cloudwatch_log_group": CloudwatchLogs,
+    "aws_cloudwatch_metric_alarm": CloudwatchAlarm,
+    "aws_autoscaling_policy": AutoScaling,
+    "aws_sqs_queue_policy": SQS,
+    "aws_sns_topic_subscription": SNS,
+    "aws_lambda_event_source_mapping": Lambda,
     # CloudFormation
     "AWS::S3::Bucket": S3,
     "AWS::RDS::DBInstance": RDS,
@@ -93,10 +110,33 @@ _ICON_MAP: dict[str, type] = {
     "AWS::WAFv2::WebACL": WAF,
     "AWS::SQS::Queue": SQS,
     "AWS::SNS::Topic": SNS,
+    "AWS::EC2::RouteTable": RouteTable,
+    "AWS::EC2::LaunchTemplate": EC2,
+    "AWS::ElasticLoadBalancingV2::TargetGroup": ALB,
+    "AWS::ElasticLoadBalancingV2::Listener": ALB,
+    "AWS::IAM::InstanceProfile": IAM,
+    "AWS::RDS::DBSubnetGroup": RDS,
+    "AWS::ElastiCache::SubnetGroup": ElastiCache,
+    "AWS::Logs::LogGroup": CloudwatchLogs,
+    "AWS::CloudWatch::Alarm": CloudwatchAlarm,
+    "AWS::AutoScaling::ScalingPolicy": AutoScaling,
+    "AWS::SQS::QueuePolicy": SQS,
+    "AWS::SNS::Subscription": SNS,
+    "AWS::Lambda::EventSourceMapping": Lambda,
 }
 
+# Subnets don't distinguish public/private at the type level -- fall back to a naming heuristic
+# on the resource's own name/address, since "Public"/"Private" in the name is a common and
+# reliable convention (as seen in real templates), then default to PublicSubnet.
+_SUBNET_TYPES = {"aws_subnet", "AWS::EC2::Subnet"}
 
-def _icon_for(resource_type: str) -> type:
+
+def _icon_for(resource_type: str, resource_name: str = "") -> type:
+    if resource_type in _SUBNET_TYPES:
+        name_lower = resource_name.lower()
+        if "private" in name_lower:
+            return PrivateSubnet
+        return PublicSubnet
     return _ICON_MAP.get(resource_type, General)
 
 
@@ -117,7 +157,7 @@ def build_architecture_diagram(resources: list[ResourceChange]) -> bytes | None:
                 outformat="png",
                 show=False,
             ):
-                nodes = {rc.address: _icon_for(rc.type)(rc.address) for rc in resources}
+                nodes = {rc.address: _icon_for(rc.type, rc.address)(rc.address) for rc in resources}
                 for rc in resources:
                     for ref in rc.references:
                         if ref in nodes:

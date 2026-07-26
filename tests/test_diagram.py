@@ -3,6 +3,7 @@ import shutil
 import pytest
 from diagrams.aws.database import RDS
 from diagrams.aws.general import General
+from diagrams.aws.network import PrivateSubnet, PublicSubnet, RouteTable
 from diagrams.aws.storage import S3
 
 from pillars.diagram import _icon_for, build_architecture_diagram
@@ -27,6 +28,19 @@ def test_icon_for_ec2_service_override():
 def test_icon_for_unknown_type_falls_back_to_general():
     assert _icon_for("aws_some_brand_new_resource_type") is General
     assert _icon_for("AWS::SomeNewService::SomeResource") is General
+
+
+def test_icon_for_route_table():
+    assert _icon_for("aws_route_table") is RouteTable
+    assert _icon_for("AWS::EC2::RouteTable") is RouteTable
+
+
+def test_icon_for_subnet_uses_name_heuristic():
+    assert _icon_for("aws_subnet", "PrivateSubnet1") is PrivateSubnet
+    assert _icon_for("AWS::EC2::Subnet", "PrivateAppSubnet") is PrivateSubnet
+    assert _icon_for("aws_subnet", "PublicSubnet1") is PublicSubnet
+    # no naming hint at all -- defaults to public rather than failing to render
+    assert _icon_for("aws_subnet", "Subnet1") is PublicSubnet
 
 
 def test_build_architecture_diagram_empty_returns_none():
