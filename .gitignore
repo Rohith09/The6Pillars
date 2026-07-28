@@ -17,5 +17,8 @@ crash.log
 # generated report
 pillars-report.html
 
+# local architecture context notes (may contain sensitive details)
+.pillars/
+
 # macOS
 .DS_Store
