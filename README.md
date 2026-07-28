@@ -2,7 +2,7 @@
   <img src="logo.svg" width="200" alt="The6Pillars logo">
 </p>
 
-# The6Pillars
+# 🏛️ The6Pillars
 
 A multi-agent CLI that reviews your AWS Terraform plan or CloudFormation template against the 6
 pillars of the
@@ -18,7 +18,25 @@ HTML report — opened in your browser automatically — with a short summary in
 ```
 $ pillars review ./infra
 
-Synthesizing... (terraform plan)  ✓ 14 resources
+   __    _____ _____ _      _               _____   _____
+  / /   |  __ \_   _| |    | |        /\   |  __ \ / ____|
+ / /_   | |__) || | | |    | |       /  \  | |__) | (___
+| '_ \  |  ___/ | | | |    | |      / /\ \ |  _  / \___ \
+| (_) | | |    _| |_| |____| |____ / ____ \| | \ \ ____) |
+ \___/  |_|   |_____|______|______/_/    \_\_|  \_\_____/
+
+  AWS Well-Architected review, six agents at a time
+
+Synthesizing... (terraform plan)
+✓ 14 resource change(s)
+
+  🔒 Security agent: found 2 issues — 1 blocking.
+  🛡️ Reliability agent: found 1 finding worth a look.
+  ⚡ Performance Efficiency agent: looks clean, no findings.
+  💰 Cost Optimization agent: looks clean, no findings.
+  🛠️ Operational Excellence agent: looks clean, no findings.
+  🌱 Sustainability agent: looks clean, no findings.
+  🧭 Reconciler agent: no cross-pillar conflicts, all clear.
 
 Pillar review
   ⚠ Security                 2 findings (1 blocking)
@@ -37,7 +55,7 @@ references the pillar agents reviewed), then BLOCKING and YOUR CALL sections exp
 long tail of lower-priority findings collapsed behind a `Show N more` toggle so it doesn't
 dominate the page.
 
-## Setup
+## ⚙️ Setup
 
 ```sh
 python3 -m venv .venv
@@ -56,7 +74,7 @@ cp .env.example .env
 # edit .env and add ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-## Usage
+## 🚀 Usage
 
 `pillars review` figures out what you're pointing it at:
 
@@ -84,7 +102,7 @@ Both bundled examples plant the same category of flaws (public S3 bucket, hardco
 single-AZ database with no backups) so you can see the tool actually catch things, in either
 format.
 
-## Giving it context
+## 🧠 Giving it context
 
 Static review has an inherent blind spot: a "public" S3 bucket might be a genuine misconfiguration,
 or it might be the intentional origin of a CloudFront distribution. Two things help the agents
@@ -110,7 +128,7 @@ pillars review ./examples/demo-infra-cfn/template.yaml
 Agents weigh this context genuinely rather than treating it as an automatic override — it can
 justify a design choice, but it won't excuse a real problem the note doesn't actually address.
 
-## How it works
+## 🔍 How it works
 
 1. The input is normalized into a common resource list — either from `terraform plan` +
    `terraform show -json` ([terraform.py](src/pillars/terraform.py)), or by parsing a
@@ -136,14 +154,14 @@ Built on the [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-
 `claude-sonnet-5` with native structured outputs — no framework, just parallel API calls plus a
 reconciliation pass.
 
-## Status
+## 🚧 Status
 
 Reviews a Terraform plan or a CloudFormation template end-to-end. Not yet built: CDK support,
 a live CloudFormation change-set diff (current CFN support reviews the template as-written, not
 a diff against a deployed stack), resource-type routing (to skip irrelevant pillars on small
 diffs), a `.pillars.yml` priority config, and interactive follow-up (`pillars chat`).
 
-## Testing
+## 🧪 Testing
 
 ```sh
 pytest
