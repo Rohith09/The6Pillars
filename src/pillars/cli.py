@@ -13,6 +13,7 @@ from graphviz.backend.execute import ExecutableNotFound
 
 from pillars import cloudformation, context as context_module, terraform
 from pillars.agents import runner as agent_runner
+from pillars.banner import print_banner
 from pillars.diagram import build_architecture_diagram
 from pillars.live_display import review_with_animation
 from pillars.render import render_summary
@@ -57,6 +58,7 @@ def review(
 ) -> None:
     """Review a Terraform plan or CloudFormation template against the 6 AWS Well-Architected
     pillars."""
+    print_banner(console)
     load_dotenv()
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
