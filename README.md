@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="logo.svg" width="200" alt="The6Pillars logo">
-</p>
-
 # 🏛️ The6Pillars
 
 A multi-agent CLI that reviews your AWS Terraform plan or CloudFormation template against the 6
