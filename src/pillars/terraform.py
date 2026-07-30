@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 from pillars.models import ResourceChange
+from pillars.sanitize import sanitize_after
 
 # actions that represent "nothing meaningfully changing" and aren't worth
 # spending pillar-agent tokens on
@@ -100,7 +101,8 @@ def normalize(plan_json: dict) -> list[ResourceChange]:
     references_map = extract_references(plan_json)
     resources: list[ResourceChange] = []
     for rc in plan_json.get("resource_changes", []):
-        actions = tuple(rc.get("change", {}).get("actions", []))
+        change = rc.get("change", {})
+        actions = tuple(change.get("actions", []))
         if actions in _IGNORED_ACTIONS or not actions:
             continue
 
@@ -114,7 +116,7 @@ def normalize(plan_json: dict) -> list[ResourceChange]:
                 name=rc["name"],
                 provider=provider_short,
                 actions=list(actions),
-                after=rc.get("change", {}).get("after"),
+                after=sanitize_after(change.get("after"), change.get("after_sensitive")),
                 references=references_map.get(rc["address"], []),
             )
         )

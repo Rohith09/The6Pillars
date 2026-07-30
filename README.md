@@ -87,6 +87,12 @@ Or skip Terraform/AWS entirely with a pre-generated plan file — handy for tryi
 pillars review ./examples/demo-infra --plan-json ./examples/demo-infra/plan.json
 ```
 
+Security note: Terraform values are sanitized before LLM review. The Terraform path uses
+Terraform sensitivity metadata plus conservative key-name heuristics to replace sensitive values
+with `[REDACTED]` before building the resource payload sent to the agents. Non-sensitive
+Terraform resource data is still sent to the configured LLM provider. This first Terraform
+redaction change does not sanitize CloudFormation input or notes loaded from `.pillars/context.md`.
+
 **CloudFormation** — point it at a template file directly (`.yaml`/`.yml`/`.json`), no AWS
 credentials needed. This reviews what the template defines, not a live diff:
 
